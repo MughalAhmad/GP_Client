@@ -1,15 +1,12 @@
 @echo off
 
-
-:: ===========================
-:: Setup React.js
-:: ===========================
-
 echo Checking React dependencies...
-npm install
+call npm install
 
-:: ===========================
-:: Start Application
-:: ===========================
+echo Starting React...
 
-npm run dev
+start "" cmd /k "npm run dev"
+
+timeout /t 5 /nobreak > nul
+
+start http://localhost:5173
