@@ -23,11 +23,11 @@ export default function FindEmail() {
 
     setLoading(true);
     setError(null);
-    
+
     try {
       // Parse domains from textarea (one per line)
       const domainList = domains.split('\n').map(d => d.trim()).filter(Boolean);
-      
+
       if (domainList.length === 0) {
         setError("Please enter valid domains");
         setLoading(false);
@@ -36,7 +36,7 @@ export default function FindEmail() {
 
       // Call the API
       const response = await emailService.findEmails(domainList);
-      
+
       // Handle different response structures
       if (Array.isArray(response)) {
         setResponseData(response);
@@ -47,7 +47,7 @@ export default function FindEmail() {
       } else {
         setResponseData(response);
       }
-      
+
     } catch (err) {
       console.error("API Error:", err);
       // Show user-friendly error message
@@ -65,22 +65,25 @@ export default function FindEmail() {
 
   // Calculate statistics
   const totalEmails = useMemo(() => {
+    let count = 0;
     if (!responseData) return 0;
-    
+
     const data = Array.isArray(responseData) ? responseData : responseData.results || [];
-    return data.reduce((sum, item) => sum + item.totalEmails, 0);
+    data.map((item)=>{if(item.totalEmails > 0){count ++}});
+    // return data.reduce((sum, item) => sum + item.totalEmails, 0);
+    return count
   }, [responseData]);
 
   const successfulWebsites = useMemo(() => {
     if (!responseData) return 0;
-    
+
     const data = Array.isArray(responseData) ? responseData : responseData.results || [];
     return data.filter((x) => x.success).length;
   }, [responseData]);
 
   const totalWebsites = useMemo(() => {
     if (!responseData) return 0;
-    
+
     const data = Array.isArray(responseData) ? responseData : responseData.results || [];
     return data.length;
   }, [responseData]);
@@ -88,7 +91,7 @@ export default function FindEmail() {
   // Get results array
   const results = useMemo(() => {
     if (!responseData) return [];
-    
+
     return Array.isArray(responseData) ? responseData : responseData.results || [];
   }, [responseData]);
 
@@ -101,7 +104,7 @@ export default function FindEmail() {
 
     try {
       let csvRows = [];
-      
+
       // Add headers
       csvRows.push([
         'Website',
@@ -112,18 +115,18 @@ export default function FindEmail() {
         'Emails (Unverified)',
         'All Emails'
       ].join(','));
-      
+
       // Add data rows - one row per domain
       results.forEach((website) => {
         // Separate verified and unverified emails
         const verifiedEmails = website.emails?.filter(e => e.verified) || [];
         const unverifiedEmails = website.emails?.filter(e => !e.verified) || [];
-        
+
         // Create comma-separated lists
         const verifiedList = verifiedEmails.map(e => e.email).join('; ');
         const unverifiedList = unverifiedEmails.map(e => e.email).join('; ');
         const allEmailsList = website.emails?.map(e => e.email).join('; ') || 'No emails found';
-        
+
         csvRows.push([
           `"${website.website}"`,
           website.totalEmails || 0,
@@ -137,19 +140,19 @@ export default function FindEmail() {
 
       // Create CSV string
       const csvString = csvRows.join('\n');
-      
+
       // Create blob and download
       const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' }); // Added BOM for Excel compatibility
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
-      
+
       link.setAttribute('href', url);
       link.setAttribute('download', `emails_grouped_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
     } catch (err) {
       console.error("CSV Download Error:", err);
       setError("Failed to download CSV file");
@@ -166,20 +169,20 @@ export default function FindEmail() {
     try {
       // Find the maximum number of emails for any domain
       const maxEmails = Math.max(...results.map(r => r.emails?.length || 0));
-      
+
       let csvRows = [];
-      
+
       // Create dynamic headers
       let headers = ['Website', 'Total Emails', 'Status', 'Elapsed Time (s)'];
-      
+
       // Add email columns (Email 1, Verified 1, Email 2, Verified 2, etc.)
       for (let i = 1; i <= maxEmails; i++) {
         headers.push(`Email ${i}`);
         headers.push(`Verified ${i}`);
       }
-      
+
       csvRows.push(headers.join(','));
-      
+
       // Add data rows
       results.forEach((website) => {
         const emails = website.emails || [];
@@ -189,7 +192,7 @@ export default function FindEmail() {
           website.success ? 'Success' : 'Failed',
           website.elapsed || 'N/A'
         ];
-        
+
         // Add each email with its verification status
         for (let i = 0; i < maxEmails; i++) {
           if (i < emails.length) {
@@ -200,7 +203,7 @@ export default function FindEmail() {
             row.push(''); // Empty cell
           }
         }
-        
+
         csvRows.push(row.join(','));
       });
 
@@ -208,14 +211,14 @@ export default function FindEmail() {
       const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
-      
+
       link.setAttribute('href', url);
       link.setAttribute('download', `emails_columns_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
     } catch (err) {
       console.error("CSV Download Error:", err);
       setError("Failed to download CSV file");
@@ -231,10 +234,10 @@ export default function FindEmail() {
 
     try {
       let csvRows = [];
-      
+
       // Simple headers
       csvRows.push(['Domain', 'Emails Found', 'All Emails'].join(','));
-      
+
       // One row per domain with all emails in one cell
       results.forEach((website) => {
         const emailList = website.emails?.map(e => e.email).join('; ') || 'No emails found';
@@ -249,14 +252,14 @@ export default function FindEmail() {
       const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
-      
+
       link.setAttribute('href', url);
       link.setAttribute('download', `emails_simple_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
     } catch (err) {
       console.error("CSV Download Error:", err);
       setError("Failed to download CSV file");
@@ -290,8 +293,8 @@ amazon.com`}
         )}
 
         <div className="mt-6 flex items-center gap-4">
-          <Button 
-            onClick={handleSearch} 
+          <Button
+            onClick={handleSearch}
             disabled={loading}
             className="min-w-[150px]"
           >
@@ -304,7 +307,7 @@ amazon.com`}
               "Find Emails"
             )}
           </Button>
-          
+
           {loading && (
             <span className="text-sm text-slate-500">
               This may take a few moments...
@@ -350,7 +353,7 @@ amazon.com`}
                   <div>
                     <h3 className="font-semibold text-slate-800">Export Results</h3>
                     <p className="text-sm text-slate-500">
-                      {totalEmails} emails found across {totalWebsites} websites
+                      {totalEmails} websites emails found across {totalWebsites} websites
                     </p>
                   </div>
                 </div>
@@ -414,11 +417,10 @@ amazon.com`}
                   </div>
                 </div>
 
-                <div className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                  website.totalEmails > 0 
-                    ? 'bg-emerald-100 text-emerald-700' 
+                <div className={`rounded-full px-4 py-2 text-sm font-semibold ${website.totalEmails > 0
+                    ? 'bg-emerald-100 text-emerald-700'
                     : 'bg-slate-100 text-slate-600'
-                }`}>
+                  }`}>
                   {website.totalEmails} Emails
                 </div>
               </div>

@@ -3,7 +3,7 @@ import { API_URL } from '../constants/api';
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000, // 30 seconds timeout
+  // timeout: 30000, // 30 seconds timeout
   headers: {
     'Content-Type': 'application/json',
   },
