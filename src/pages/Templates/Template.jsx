@@ -1,34 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useParams } from "react";
 import { FaSave, FaArrowLeft } from "react-icons/fa";
 import MainLayout from "../../layouts/MainLayout";
 import { useNavigate } from "react-router-dom";
+import { templateService } from "../../services/templateService";
 
 import PageHeader from "../../components/common/PageHeader";
-export default function Template({
-  initialData = null,
-  onSubmit,
-  onCancel,
-  loading = false,
-}) {
-  const isEdit = !!initialData;
+export default function Template( ) {
+  const isEdit = null;
   const navigate = useNavigate();
+  const params = useParams();
   const [form, setForm] = useState({
     title: "",
     subject: "",
     body: "",
     status: "Active",
   });
-
+ console.log('params',params)
   useEffect(() => {
-    if (initialData) {
+    if (false) {
       setForm({
-        title: initialData.title || "",
-        subject: initialData.subject || "",
-        body: initialData.body || "",
-        status: initialData.status || "Active",
+        // title: initialData.title || "",
+        // subject: initialData.subject || "",
+        // body: initialData.body || "",
+        // status: initialData.status || "Active",
       });
     }
-  }, [initialData]);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,8 +36,14 @@ export default function Template({
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // const handleSubmit = (e) => {
+    
+
+  //   onSubmit?.(form);
+  // };
+
+  const handleSubmit = async (e) => {
+      e.preventDefault();
 
     if (!form.title.trim()) {
       return alert("Title is required.");
@@ -53,9 +56,31 @@ export default function Template({
     if (!form.body.trim()) {
       return alert("Body is required.");
     }
-
-    onSubmit?.(form);
-  };
+      // setError("");
+      // setSuccess("");
+  
+      // setLoading(true);
+  
+      try {
+        // Call login API
+        const response = await templateService.save(form);
+  
+        if (response.success) {
+          // setSuccess("Create successfully");
+          
+          // Redirect to dashboard after short delay
+          setTimeout(() => {
+            navigate("/templates");
+          }, 1000);
+        } else {
+          setError(response.message || "Creting failed. Please try again.");
+        }
+      } catch (err) {
+        console.error("Template error:", err);
+      } finally {
+        // setLoading(false);
+      }
+    };
 
   return (
     <MainLayout>
@@ -240,16 +265,16 @@ Best Regards`}
 
           <button
             type="submit"
-            disabled={loading}
+            // disabled={loading}
             className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50"
           >
             <FaSave className="mr-2 inline" />
 
-            {loading
+            {/* {loading
               ? "Saving..."
               : isEdit
               ? "Update Template"
-              : "Save Template"}
+              : "Save Template"} */}
           </button>
 
         </div>

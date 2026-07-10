@@ -327,7 +327,7 @@ export default function Signup() {
     try {
       // Prepare data for API
       const userData = {
-        name: formData.fullName.trim(),
+        fullName: formData.fullName.trim(),
         email: formData.email.toLowerCase().trim(),
         password: formData.password,
       };
@@ -335,7 +335,7 @@ export default function Signup() {
       // Call API
       const response = await authService.signup(userData);
 
-      if (response.success) {
+      if (!response.hasError) {
         setSuccess(true);
         setError("");
         

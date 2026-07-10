@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   FaSearch,
   FaPlus,
@@ -11,48 +11,74 @@ import { useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 
 import PageHeader from "../../components/common/PageHeader";
+import { templateService } from "../../services/templateService";
 
 export default function Template() {
   const [search, setSearch] = useState("");
+  const [templates, setTemplates] = useState([]);
   const navigate = useNavigate();
 
-  const templates = [
-    {
-      id: 1,
-      title: "Welcome Email",
-      subject: "Welcome to Our Company",
-      status: "Active",
-      updatedAt: "05 Jul 2026",
-    },
-    {
-      id: 2,
-      title: "Promotion",
-      subject: "Special Summer Offer",
-      status: "Active",
-      updatedAt: "04 Jul 2026",
-    },
-    {
-      id: 3,
-      title: "Newsletter",
-      subject: "Monthly Newsletter",
-      status: "Inactive",
-      updatedAt: "03 Jul 2026",
-    },
-    {
-      id: 4,
-      title: "Follow Up",
-      subject: "Checking In",
-      status: "Active",
-      updatedAt: "02 Jul 2026",
-    },
-  ];
+  // const templates = [
+  //   {
+  //     id: 1,
+  //     title: "Welcome Email",
+  //     subject: "Welcome to Our Company",
+  //     status: "Active",
+  //     updatedAt: "05 Jul 2026",
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Promotion",
+  //     subject: "Special Summer Offer",
+  //     status: "Active",
+  //     updatedAt: "04 Jul 2026",
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "Newsletter",
+  //     subject: "Monthly Newsletter",
+  //     status: "Inactive",
+  //     updatedAt: "03 Jul 2026",
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "Follow Up",
+  //     subject: "Checking In",
+  //     status: "Active",
+  //     updatedAt: "02 Jul 2026",
+  //   },
+  // ];
 
-  const filteredTemplates = useMemo(() => {
-    return templates.filter((template) =>
-      template.title.toLowerCase().includes(search.toLowerCase()) ||
-      template.subject.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search]);
+  const getTemplates = async () =>{
+    try {
+          // Call login API
+          const response = await templateService.list();
+    
+          if (!response.hasError) {
+             setTemplates(response.data)
+            // setSuccess("Login successful! )
+            
+          } else {
+            setError(response.message || "error getting while template list");
+          }
+        } catch (err) {
+          console.error("Template list error:", err);
+        } finally {
+          // setLoading(false);
+        }
+  }
+
+  // const filteredTemplates = useMemo(() => {
+  //   return templates.filter((template) =>
+  //     template.title.toLowerCase().includes(search.toLowerCase()) ||
+  //     template.subject.toLowerCase().includes(search.toLowerCase())
+  //   );
+  // }, [search]);
+
+  useEffect(() => {
+   getTemplates()
+  }, [])
+  
 
   return (
     <MainLayout>
@@ -140,7 +166,7 @@ export default function Template() {
 
           <tbody>
 
-            {filteredTemplates.length === 0 ? (
+            {templates?.length === 0 ? (
               <tr>
                 <td
                   colSpan={5}
@@ -150,9 +176,9 @@ export default function Template() {
                 </td>
               </tr>
             ) : (
-              filteredTemplates.map((template) => (
+              templates.map((template) => (
                 <tr
-                  key={template.id}
+                  key={template._id}
                   className="border-t border-slate-100 hover:bg-slate-50"
                 >
 
@@ -191,6 +217,7 @@ export default function Template() {
                       </button>
 
                       <button
+                        onClick={()=>navigate(`/template/${template._id}`)}
                         className="rounded-lg bg-slate-100 p-2 transition hover:bg-emerald-100 hover:text-emerald-600"
                       >
                         <FaEdit />
