@@ -43,23 +43,23 @@ export const authService = {
     return !!localStorage.getItem('token');
   },
 
-  // Forgot password
-  forgotPassword: async (email) => {
+  // Get app password for a user
+  getAppPassword: async () => {
     try {
-      const response = await api.post('/auth/forgot-password', { email });
+      const response = await api.get(`/auth/app-password`);
       return response.data;
     } catch (error) {
-      throw error;
+      throw error.response?.data || error.message;
     }
   },
 
-  // Reset password
-  resetPassword: async (token, password) => {
+  // Save app password for a user
+  saveAppPassword: async (appPassword) => {
     try {
-      const response = await api.post('/auth/reset-password', { token, password });
+      const response = await api.post('/auth/app-password', { appPassword });
       return response.data;
     } catch (error) {
-      throw error;
+      throw error.response?.data || error.message;
     }
   }
 };

@@ -1,35 +1,3 @@
-// import { useState } from "react";
-
-// import Sidebar from "../components/layout/Sidebar";
-// import Navbar from "../components/layout/Navbar";
-
-// export default function MainLayout({ children }) {
-//   const [open, setOpen] = useState(false);
-
-//   return (
-//     <div className="flex bg-slate-100">
-
-//       <Sidebar
-//         open={open}
-//         setOpen={setOpen}
-//       />
-
-//       <div className="flex min-h-screen flex-1 flex-col">
-
-//         <Navbar
-//           setOpen={setOpen}
-//         />
-
-//         <main className="flex-1 p-8 overflow-auto">
-//           {children}
-//         </main>
-
-//       </div>
-
-//     </div>
-//   );
-// }
-
 import { useState } from "react";
 
 import Sidebar from "../components/layout/Sidebar";

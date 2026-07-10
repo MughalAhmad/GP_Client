@@ -4,7 +4,7 @@ export const emailService = {
   // Find emails for multiple domains
   findEmails: async (domains) => {
     try {
-      const response = await api.post('/findEmail/getEmails', { 
+      const response = await api.post('/email/getEmails', { 
         domains: domains.filter(Boolean) // Remove empty strings
       });
       return response.data;
@@ -33,5 +33,17 @@ export const emailService = {
     } catch (error) {
       throw error.response?.data || error.message;
     }
-  }
+  },
+
+  // Get email history (if your backend supports it)
+  sendEmail: async (payload) => {
+    try {
+      const response = await api.post('/email/sendEmail', { 
+        payload
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
 };

@@ -240,7 +240,7 @@ export default function FindEmail() {
 
       // One row per domain with all emails in one cell
       results.forEach((website) => {
-        const emailList = website.emails?.map(e => e.email).join('; ') || 'No emails found';
+        const emailList = website.emails?.filter(e => e.email && e.verified).map(e => e.email).join('; ') || 'No emails found';
         csvRows.push([
           `"${website.website}"`,
           website.totalEmails || 0,
