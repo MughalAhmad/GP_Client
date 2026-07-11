@@ -1,14 +1,14 @@
-// components/ProtectedRoute.jsx
+// components/RoleBasedRoute.jsx
 import { Navigate } from "react-router-dom";
 import { authService } from "../services/authService"
-export default function ProtectedRoute({ children }) {
 
-  // Redirect to login if not authenticated
+export default function RoleBasedRoute({ children, allowedRoles = [] }) {
+
   let isAuthenticated = authService.isAuthenticated();
+  
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Render children if authenticated
   return children;
 }

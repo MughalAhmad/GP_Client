@@ -26,16 +26,28 @@ export const authService = {
   },
 
   // Sign out user
-  signout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
+  signout: async () => {
+    try {
+      const response = await api.post('/auth/signout');
+      if (!response.data.hasError) {
+          localStorage.removeItem('token');
+          // localStorage.removeItem('user');
+          // window.location.href = '/login';
+      }
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Get current user
-  getCurrentUser: () => {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+  getCurrentUser: async () => {
+    try {
+      const response = await api.get('/auth/getCurrentUser');
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   },
 
   // Check if user is authenticated

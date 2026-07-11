@@ -1,179 +1,3 @@
-// import { Link, useNavigate } from "react-router-dom";
-// import AuthLayout from "../../layouts/AuthLayout";
-// import Input from "../../components/ui/Input";
-// import Button from "../../components/ui/Button";
-// import { 
-//   FaEnvelope, 
-//   FaLock, 
-//   FaArrowRight, 
-//   FaGoogle, 
-//   FaGithub,
-//   FaEye,
-//   FaEyeSlash 
-// } from "react-icons/fa";
-// import { useState } from "react";
-
-// export default function Login() {
-//   const [showPassword, setShowPassword] = useState(false);
-//   const [formData, setFormData] = useState({
-//     email: "",
-//     password: "",
-//     rememberMe: false
-//   });
-
-//   const navigate = useNavigate();
-
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-//     // Handle login logic here
-//     navigate("/dashboard"); // Redirect to dashboard after successful login
-//   };
-
-//   const handleChange = (e) => {
-//     const { name, value, type, checked } = e.target;
-//     setFormData(prev => ({
-//       ...prev,
-//       [name]: type === "checkbox" ? checked : value
-//     }));
-//   };
-
-//   return (
-//     <AuthLayout
-//       title="Welcome Back 👋"
-//       subtitle="Sign in to continue managing your Email Finder."
-//     >
-//       <div className="relative mb-10 flex flex-col items-center">
-//         {/* Animated background glow */}
-//         <div className="absolute -inset-4 blur-3xl opacity-20">
-//           <div className="h-full w-full rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse"></div>
-//         </div>
-        
-//         <div className="relative flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-5xl font-bold text-white shadow-2xl transform transition-transform hover:scale-110 hover:rotate-6 duration-300">
-//           <span className="relative z-10">📧</span>
-//           <div className="absolute inset-0 rounded-3xl bg-white/20 blur-sm"></div>
-//         </div>
-
-//         <h2 className="mt-6 text-3xl md:text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-//           Email Finder
-//         </h2>
-
-//         <p className="mt-2 text-center text-slate-500 max-w-sm">
-//           Welcome back! Please login to your account.
-//         </p>
-//       </div>
-
-//       <form onSubmit={handleSubmit} className="space-y-6">
-//         <div className="space-y-5">
-//           <div className="group relative">
-//             <Input
-//               label="Email Address"
-//               name="email"
-//               type="email"
-//               value={formData.email}
-//               onChange={handleChange}
-//               placeholder="john@example.com"
-//               icon={<FaEnvelope className="text-slate-400 group-focus-within:text-blue-600 transition-colors" />}
-//               className="pl-11 py-3 border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl transition-all duration-300"
-//               required
-//             />
-//           </div>
-
-//           <div className="group relative">
-//             <Input
-//               label="Password"
-//               name="password"
-//               type={showPassword ? "text" : "password"}
-//               value={formData.password}
-//               onChange={handleChange}
-//               placeholder="••••••••"
-//               icon={<FaLock className="text-slate-400 group-focus-within:text-blue-600 transition-colors" />}
-//               className="pl-11 py-3 border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl transition-all duration-300"
-//               required
-//             />
-//             <button
-//               type="button"
-//               onClick={() => setShowPassword(!showPassword)}
-//               className="absolute right-3 top-[42px] text-slate-400 hover:text-slate-600 transition-colors"
-//             >
-//               {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
-//             </button>
-//           </div>
-//         </div>
-
-//         <div className="flex items-center justify-between text-sm">
-//           <label className="flex cursor-pointer items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors">
-//             <input
-//               type="checkbox"
-//               name="rememberMe"
-//               checked={formData.rememberMe}
-//               onChange={handleChange}
-//               className="h-4 w-4 rounded border-2 border-slate-300 accent-blue-600 cursor-pointer transition-all hover:scale-110"
-//             />
-//             <span>Remember me</span>
-//           </label>
-
-//           <button
-//             className="font-medium text-blue-600 transition-all hover:text-indigo-700 hover:underline-offset-4 hover:underline"
-//             type="button"
-//           >
-//             Forgot Password?
-//           </button>
-//         </div>
-
-//         <Button
-//           type="submit"
-//           className="group relative flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/25"
-//         >
-//           <span className="relative z-10 flex items-center">
-//             Sign In
-//             <FaArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-2" />
-//           </span>
-//           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-//         </Button>
-
-//         <div className="relative">
-//           <div className="absolute inset-0 flex items-center">
-//             <div className="w-full border-t border-slate-200"></div>
-//           </div>
-//           <div className="relative flex justify-center">
-//             <span className="bg-white px-4 text-sm text-slate-400 font-medium">
-//               Or continue with
-//             </span>
-//           </div>
-//         </div>
-
-//         <div className="grid grid-cols-2 gap-4">
-//           <button
-//             type="button"
-//             className="group flex h-12 items-center justify-center gap-3 rounded-xl border-2 border-slate-200 bg-white font-medium text-slate-700 transition-all duration-300 hover:-translate-y-1 hover:border-red-400 hover:shadow-lg hover:shadow-red-100"
-//           >
-//             <FaGoogle className="text-red-500 text-lg transition-transform group-hover:scale-110" />
-//             <span>Google</span>
-//           </button>
-
-//           <button
-//             type="button"
-//             className="group flex h-12 items-center justify-center gap-3 rounded-xl border-2 border-slate-200 bg-white font-medium text-slate-700 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 hover:shadow-lg hover:shadow-slate-100"
-//           >
-//             <FaGithub className="text-slate-700 text-lg transition-transform group-hover:scale-110" />
-//             <span>GitHub</span>
-//           </button>
-//         </div>
-
-//         <p className="text-center text-xs md:text-sm text-slate-500 pt-2">
-//           Don't have an account?
-//           <Link
-//             to="/signup"
-//             className="ml-2 font-semibold text-blue-600 transition-all hover:text-indigo-700 hover:underline-offset-2 hover:underline"
-//           >
-//             Create Account →
-//           </Link>
-//         </p>
-//       </form>
-//     </AuthLayout>
-//   );
-// }
-
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import AuthLayout from "../../layouts/AuthLayout";
 import Input from "../../components/ui/Input";
@@ -206,15 +30,6 @@ export default function Login() {
 
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Check for success message from signup redirect
-  useEffect(() => {
-    if (location.state?.message) {
-      setSuccess(location.state.message);
-      // Clear the state after showing message
-      window.history.replaceState({}, document.title);
-    }
-  }, [location]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -282,12 +97,10 @@ export default function Login() {
     if (error) setError("");
   };
 
-  // Check if user is already logged in
-  useEffect(() => {
-    if (authService.isAuthenticated()) {
-      navigate("/dashboard");
-    }
-  }, [navigate]);
+let isAuthenticated = authService.isAuthenticated();
+  if (isAuthenticated) {
+    navigate('/dashboard', { replace: true });
+  }
 
   return (
     <AuthLayout
