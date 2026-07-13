@@ -47,10 +47,6 @@ export default function Navbar({ setOpen }) {
         >
           <FaBars />
         </button>
-
-        <h2 className="text-2xl font-bold text-slate-800">
-          Dashboard
-        </h2>
       </div>
 
       <div className="flex items-center gap-6">
