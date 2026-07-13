@@ -31,7 +31,7 @@ export const authService = {
       const response = await api.post('/auth/signout');
       if (!response.data.hasError) {
           localStorage.removeItem('token');
-          // localStorage.removeItem('user');
+          localStorage.removeItem('user');
           // window.location.href = '/login';
       }
       return response.data;
@@ -51,7 +51,42 @@ export const authService = {
   },
 
   // Check if user is authenticated
-  isAuthenticated: () => {
+  // isAuthenticated: () => {
+  //   return !!localStorage.getItem('token');
+  // },
+
+   // Get current user
+  // getCurrentUser: async () => {
+  //   try {
+  //     const response = await api.get('/auth/getCurrentUser');
+  //     return response.data;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // },
+
+  // Enhanced authentication check with API verification
+  isAuthenticated: async () => {
+    try {
+      // First check if token exists
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return false;
+      }
+
+      // Verify token with backend
+      await authService.getCurrentUser();
+      return true;
+    } catch (error) {
+      // Token is invalid, clean up
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return false;
+    }
+  },
+
+  // Synchronous version for quick checks (less secure)
+  hasToken: () => {
     return !!localStorage.getItem('token');
   },
 

@@ -593,38 +593,6 @@ export default function Signup() {
           <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition duration-1000 group-hover:translate-x-[100%]" />
         </Button>
 
-        <div className="relative py-2">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t"></div>
-          </div>
-
-          <div className="relative flex justify-center">
-            <span className="bg-white px-4 text-sm text-slate-400">
-              Or sign up with
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            disabled={loading || success}
-            className="flex h-12 items-center justify-center gap-3 rounded-xl border-2 transition hover:-translate-y-1 hover:border-red-400 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <FaGoogle className="text-red-500" />
-            Google
-          </button>
-
-          <button
-            type="button"
-            disabled={loading || success}
-            className="flex h-12 items-center justify-center gap-3 rounded-xl border-2 transition hover:-translate-y-1 hover:border-slate-400 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <FaGithub />
-            GitHub
-          </button>
-        </div>
-
         <p className="pt-3 text-center text-sm text-slate-500">
           Already have an account?
 

@@ -97,11 +97,6 @@ export default function Login() {
     if (error) setError("");
   };
 
-let isAuthenticated = authService.isAuthenticated();
-  if (isAuthenticated) {
-    navigate('/dashboard', { replace: true });
-  }
-
   return (
     <AuthLayout
       title="Welcome Back 👋"
@@ -225,37 +220,6 @@ let isAuthenticated = authService.isAuthenticated();
           </span>
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
         </Button>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200"></div>
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-white px-4 text-sm text-slate-400 font-medium">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            disabled={loading}
-            className="group flex h-12 items-center justify-center gap-3 rounded-xl border-2 border-slate-200 bg-white font-medium text-slate-700 transition-all duration-300 hover:-translate-y-1 hover:border-red-400 hover:shadow-lg hover:shadow-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <FaGoogle className="text-red-500 text-lg transition-transform group-hover:scale-110" />
-            <span>Google</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={loading}
-            className="group flex h-12 items-center justify-center gap-3 rounded-xl border-2 border-slate-200 bg-white font-medium text-slate-700 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 hover:shadow-lg hover:shadow-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <FaGithub className="text-slate-700 text-lg transition-transform group-hover:scale-110" />
-            <span>GitHub</span>
-          </button>
-        </div>
 
         <p className="text-center text-xs md:text-sm text-slate-500 pt-2">
           Don't have an account?
