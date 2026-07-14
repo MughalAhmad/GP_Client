@@ -2,10 +2,11 @@ import api from '../utils/axios';
 
 export const emailService = {
   // Find emails for multiple domains
-  findEmails: async (domains) => {
+  findEmails: async (domains, limit) => {
     try {
       const response = await api.post('/email/getEmails', { 
-        domains: domains.filter(Boolean) // Remove empty strings
+        domains: domains.filter(Boolean), // Remove empty strings
+        limit: limit // Include limit in the request
       });
       return response.data;
     } catch (error) {

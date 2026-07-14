@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { FaCopy, FaCheckCircle, FaGlobe, FaDownload } from "react-icons/fa";
+import { useMemo, useState, useEffect } from "react";
+import { FaCopy, FaCheckCircle, FaGlobe, FaDownload, FaCheck } from "react-icons/fa";
 
 import MainLayout from "../../layouts/MainLayout";
 import PageHeader from "../../components/common/PageHeader";
@@ -13,29 +13,94 @@ export default function FindEmail() {
   const [responseData, setResponseData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isLimitValid, setIsLimitValid] = useState(false);
+
+  // Get user role and determine max domains limit
+  const storedUser = localStorage.getItem("user");
+  let userData = null;
+  if (storedUser) {
+    userData = JSON.parse(storedUser);
+  }
+
+  const userRole = userData?.role || "user";
+  const maxDomains = useMemo(() => {
+    switch (userRole) {
+      case "superAdmin":
+        return 50;
+      case "admin":
+        return 35;
+      case "user":
+      default:
+        return 25;
+    }
+  }, [userRole]);
+
+  // Check domain limit in real-time
+  useEffect(() => {
+    const domainList = domains
+      .split("\n")
+      .map((d) => d.trim())
+      .filter(Boolean);
+
+    if (domainList.length === 0) {
+      setIsLimitValid(false);
+      // Clear error if no domains entered
+      if (error && error.includes("limit")) {
+        setError(null);
+      }
+      return;
+    }
+
+    if (domainList.length <= maxDomains) {
+      setIsLimitValid(true);
+      // Remove any limit-related error
+      if (error && error.includes("limit")) {
+        setError(null);
+      }
+    } else {
+      setIsLimitValid(false);
+      setError(
+        `You can only process up to ${maxDomains} domains. Your role (${userRole}) has a limit of ${maxDomains} domains.`
+      );
+    }
+  }, [domains, maxDomains, userRole, error]);
 
   const handleSearch = async () => {
     // Validate input
     if (!domains.trim()) {
       setError("Please enter at least one domain");
+      setIsLimitValid(false);
+      return;
+    }
+
+    // Parse domains from textarea (one per line)
+    const domainList = domains
+      .split("\n")
+      .map((d) => d.trim())
+      .filter(Boolean);
+
+    if (domainList.length === 0) {
+      setError("Please enter valid domains");
+      setIsLimitValid(false);
+      return;
+    }
+
+    // Check domain limit based on user role
+    if (domainList.length > maxDomains) {
+      setError(
+        `You can only process up to ${maxDomains} domains. Your role (${userRole}) has a limit of ${maxDomains} domains.`
+      );
+      setIsLimitValid(false);
       return;
     }
 
     setLoading(true);
     setError(null);
+    setIsLimitValid(true);
 
     try {
-      // Parse domains from textarea (one per line)
-      const domainList = domains.split('\n').map(d => d.trim()).filter(Boolean);
-
-      if (domainList.length === 0) {
-        setError("Please enter valid domains");
-        setLoading(false);
-        return;
-      }
-
-      // Call the API
-      const response = await emailService.findEmails(domainList);
+      // Call the API with the limit parameter
+      const response = await emailService.findEmails(domainList, maxDomains);
 
       // Handle different response structures
       if (Array.isArray(response)) {
@@ -47,11 +112,10 @@ export default function FindEmail() {
       } else {
         setResponseData(response);
       }
-
     } catch (err) {
       console.error("API Error:", err);
       // Show user-friendly error message
-      if (typeof err === 'string') {
+      if (typeof err === "string") {
         setError(err);
       } else if (err.message) {
         setError(err.message);
@@ -68,23 +132,32 @@ export default function FindEmail() {
     let count = 0;
     if (!responseData) return 0;
 
-    const data = Array.isArray(responseData) ? responseData : responseData.results || [];
-    data.map((item)=>{if(item.totalEmails > 0){count ++}});
-    // return data.reduce((sum, item) => sum + item.totalEmails, 0);
-    return count
+    const data = Array.isArray(responseData)
+      ? responseData
+      : responseData.results || [];
+    data.map((item) => {
+      if (item.totalEmails > 0) {
+        count++;
+      }
+    });
+    return count;
   }, [responseData]);
 
   const successfulWebsites = useMemo(() => {
     if (!responseData) return 0;
 
-    const data = Array.isArray(responseData) ? responseData : responseData.results || [];
+    const data = Array.isArray(responseData)
+      ? responseData
+      : responseData.results || [];
     return data.filter((x) => x.success).length;
   }, [responseData]);
 
   const totalWebsites = useMemo(() => {
     if (!responseData) return 0;
 
-    const data = Array.isArray(responseData) ? responseData : responseData.results || [];
+    const data = Array.isArray(responseData)
+      ? responseData
+      : responseData.results || [];
     return data.length;
   }, [responseData]);
 
@@ -92,8 +165,20 @@ export default function FindEmail() {
   const results = useMemo(() => {
     if (!responseData) return [];
 
-    return Array.isArray(responseData) ? responseData : responseData.results || [];
+    return Array.isArray(responseData)
+      ? responseData
+      : responseData.results || [];
   }, [responseData]);
+
+  // Get current domain count
+  const currentDomainCount = useMemo(() => {
+    return domains.split("\n").filter((d) => d.trim()).length;
+  }, [domains]);
+
+  // Check if ready to search
+  const isReadyToSearch = useMemo(() => {
+    return currentDomainCount > 0 && currentDomainCount <= maxDomains && !loading;
+  }, [currentDomainCount, maxDomains, loading]);
 
   // Function to download CSV with grouped emails
   const downloadGroupedCSV = () => {
@@ -106,53 +191,63 @@ export default function FindEmail() {
       let csvRows = [];
 
       // Add headers
-      csvRows.push([
-        'Website',
-        'Total Emails Found',
-        'Status',
-        'Elapsed Time (s)',
-        'Emails (Verified)',
-        'Emails (Unverified)',
-        'All Emails'
-      ].join(','));
+      csvRows.push(
+        [
+          "Website",
+          "Total Emails Found",
+          "Status",
+          "Elapsed Time (s)",
+          "Emails (Verified)",
+          "Emails (Unverified)",
+          "All Emails",
+        ].join(",")
+      );
 
       // Add data rows - one row per domain
       results.forEach((website) => {
         // Separate verified and unverified emails
-        const verifiedEmails = website.emails?.filter(e => e.verified) || [];
-        const unverifiedEmails = website.emails?.filter(e => !e.verified) || [];
+        const verifiedEmails = website.emails?.filter((e) => e.verified) || [];
+        const unverifiedEmails =
+          website.emails?.filter((e) => !e.verified) || [];
 
         // Create comma-separated lists
-        const verifiedList = verifiedEmails.map(e => e.email).join('; ');
-        const unverifiedList = unverifiedEmails.map(e => e.email).join('; ');
-        const allEmailsList = website.emails?.map(e => e.email).join('; ') || 'No emails found';
+        const verifiedList = verifiedEmails.map((e) => e.email).join("; ");
+        const unverifiedList = unverifiedEmails.map((e) => e.email).join("; ");
+        const allEmailsList =
+          website.emails?.map((e) => e.email).join("; ") || "No emails found";
 
-        csvRows.push([
-          `"${website.website}"`,
-          website.totalEmails || 0,
-          website.success ? 'Success' : 'Failed',
-          website.elapsed || 'N/A',
-          `"${verifiedList || 'None'}"`,
-          `"${unverifiedList || 'None'}"`,
-          `"${allEmailsList}"`
-        ].join(','));
+        csvRows.push(
+          [
+            `"${website.website}"`,
+            website.totalEmails || 0,
+            website.success ? "Success" : "Failed",
+            website.elapsed || "N/A",
+            `"${verifiedList || "None"}"`,
+            `"${unverifiedList || "None"}"`,
+            `"${allEmailsList}"`,
+          ].join(",")
+        );
       });
 
       // Create CSV string
-      const csvString = csvRows.join('\n');
+      const csvString = csvRows.join("\n");
 
       // Create blob and download
-      const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' }); // Added BOM for Excel compatibility
-      const link = document.createElement('a');
+      const blob = new Blob(["\uFEFF" + csvString], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
 
-      link.setAttribute('href', url);
-      link.setAttribute('download', `emails_grouped_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `emails_grouped_${new Date().toISOString().slice(0, 10)}.csv`
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
     } catch (err) {
       console.error("CSV Download Error:", err);
       setError("Failed to download CSV file");
@@ -168,12 +263,12 @@ export default function FindEmail() {
 
     try {
       // Find the maximum number of emails for any domain
-      const maxEmails = Math.max(...results.map(r => r.emails?.length || 0));
+      const maxEmails = Math.max(...results.map((r) => r.emails?.length || 0));
 
       let csvRows = [];
 
       // Create dynamic headers
-      let headers = ['Website', 'Total Emails', 'Status', 'Elapsed Time (s)'];
+      let headers = ["Website", "Total Emails", "Status", "Elapsed Time (s)"];
 
       // Add email columns (Email 1, Verified 1, Email 2, Verified 2, etc.)
       for (let i = 1; i <= maxEmails; i++) {
@@ -181,7 +276,7 @@ export default function FindEmail() {
         headers.push(`Verified ${i}`);
       }
 
-      csvRows.push(headers.join(','));
+      csvRows.push(headers.join(","));
 
       // Add data rows
       results.forEach((website) => {
@@ -189,36 +284,40 @@ export default function FindEmail() {
         const row = [
           `"${website.website}"`,
           website.totalEmails || 0,
-          website.success ? 'Success' : 'Failed',
-          website.elapsed || 'N/A'
+          website.success ? "Success" : "Failed",
+          website.elapsed || "N/A",
         ];
 
         // Add each email with its verification status
         for (let i = 0; i < maxEmails; i++) {
           if (i < emails.length) {
             row.push(`"${emails[i].email}"`);
-            row.push(emails[i].verified ? 'Yes' : 'No');
+            row.push(emails[i].verified ? "Yes" : "No");
           } else {
-            row.push(''); // Empty cell
-            row.push(''); // Empty cell
+            row.push(""); // Empty cell
+            row.push(""); // Empty cell
           }
         }
 
-        csvRows.push(row.join(','));
+        csvRows.push(row.join(","));
       });
 
-      const csvString = csvRows.join('\n');
-      const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const csvString = csvRows.join("\n");
+      const blob = new Blob(["\uFEFF" + csvString], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
 
-      link.setAttribute('href', url);
-      link.setAttribute('download', `emails_columns_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `emails_columns_${new Date().toISOString().slice(0, 10)}.csv`
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
     } catch (err) {
       console.error("CSV Download Error:", err);
       setError("Failed to download CSV file");
@@ -236,30 +335,40 @@ export default function FindEmail() {
       let csvRows = [];
 
       // Simple headers
-      csvRows.push(['Domain', 'Emails Found', 'All Emails'].join(','));
+      csvRows.push(["Domain", "Emails Found", "All Emails"].join(","));
 
       // One row per domain with all emails in one cell
       results.forEach((website) => {
-        const emailList = website.emails?.filter(e => e.email && e.verified).map(e => e.email).join('; ') || 'No emails found';
-        csvRows.push([
-          `"${website.website}"`,
-          website.totalEmails || 0,
-          `"${emailList}"`
-        ].join(','));
+        const emailList =
+          website.emails
+            ?.filter((e) => e.email && e.verified)
+            .map((e) => e.email)
+            .join("; ") || "No emails found";
+        csvRows.push(
+          [
+            `"${website.website}"`,
+            website.totalEmails || 0,
+            `"${emailList}"`,
+          ].join(",")
+        );
       });
 
-      const csvString = csvRows.join('\n');
-      const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const csvString = csvRows.join("\n");
+      const blob = new Blob(["\uFEFF" + csvString], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
 
-      link.setAttribute('href', url);
-      link.setAttribute('download', `emails_simple_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `emails_simple_${new Date().toISOString().slice(0, 10)}.csv`
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
     } catch (err) {
       console.error("CSV Download Error:", err);
       setError("Failed to download CSV file");
@@ -270,7 +379,7 @@ export default function FindEmail() {
     <MainLayout>
       <PageHeader
         title="Find Emails"
-        subtitle="Paste one domain per line."
+        subtitle={`Paste one domain per line. (Max ${maxDomains} domains for ${userRole} role)`}
       />
 
       {/* Search Section */}
@@ -285,6 +394,62 @@ amazon.com`}
           className="font-mono"
         />
 
+        {/* Domain limit indicator */}
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-slate-500">
+              Domains: {currentDomainCount} / {maxDomains}
+            </span>
+            
+            {/* Status indicator */}
+            {currentDomainCount > 0 && currentDomainCount <= maxDomains && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+                <FaCheck className="h-3 w-3" />
+                Ready to go!
+              </span>
+            )}
+            
+            {currentDomainCount > maxDomains && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
+                ⚠️ Over limit
+              </span>
+            )}
+          </div>
+          
+          <span
+            className={`font-medium ${
+              userRole === "superAdmin"
+                ? "text-purple-600"
+                : userRole === "admin"
+                ? "text-blue-600"
+                : "text-slate-600"
+            }`}
+          >
+            Role: {userRole} (Limit: {maxDomains})
+          </span>
+        </div>
+
+        {/* Progress bar showing limit usage */}
+        {currentDomainCount > 0 && (
+          <div className="mt-2">
+            <div className="h-1.5 w-full rounded-full bg-slate-100">
+              <div
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  currentDomainCount <= maxDomains
+                    ? currentDomainCount / maxDomains > 0.8
+                      ? "bg-yellow-500"
+                      : "bg-emerald-500"
+                    : "bg-red-500"
+                }`}
+                style={{
+                  width: `${Math.min((currentDomainCount / maxDomains) * 100, 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Error display */}
         {error && (
           <div className="mt-4 rounded-xl bg-red-50 p-4 text-red-600 border border-red-100">
             <span className="font-semibold">Error: </span>
@@ -295,8 +460,12 @@ amazon.com`}
         <div className="mt-6 flex items-center gap-4">
           <Button
             onClick={handleSearch}
-            disabled={loading}
-            className="min-w-[150px]"
+            disabled={loading || !isReadyToSearch}
+            className={`min-w-[150px] ${
+              isReadyToSearch
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-slate-300 cursor-not-allowed"
+            }`}
           >
             {loading ? (
               <>
@@ -311,6 +480,13 @@ amazon.com`}
           {loading && (
             <span className="text-sm text-slate-500">
               This may take a few moments...
+            </span>
+          )}
+
+          {!loading && currentDomainCount > 0 && currentDomainCount <= maxDomains && (
+            <span className="text-sm text-emerald-600 font-medium flex items-center gap-1">
+              <FaCheck className="h-4 w-4" />
+              Ready to search
             </span>
           )}
         </div>
@@ -351,9 +527,12 @@ amazon.com`}
                     <FaDownload className="text-blue-600 text-xl" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-slate-800">Export Results</h3>
+                    <h3 className="font-semibold text-slate-800">
+                      Export Results
+                    </h3>
                     <p className="text-sm text-slate-500">
-                      {totalEmails} websites emails found across {totalWebsites} websites
+                      {totalEmails} websites emails found across {totalWebsites}{" "}
+                      websites
                     </p>
                   </div>
                 </div>
@@ -388,7 +567,9 @@ amazon.com`}
               {/* Info box */}
               <div className="mt-4 rounded-lg bg-blue-50 p-4 border border-blue-100">
                 <p className="text-sm text-blue-700">
-                  <span className="font-semibold">💡 Tip:</span> Each domain appears once in the CSV with all its emails grouped in a single cell (separated by semicolons).
+                  <span className="font-semibold">💡 Tip:</span> Each domain
+                  appears once in the CSV with all its emails grouped in a
+                  single cell (separated by semicolons).
                 </p>
               </div>
             </div>
@@ -412,15 +593,20 @@ amazon.com`}
                       {website.website}
                     </h3>
                     <p className="text-sm text-slate-500">
-                      {website.elapsed ? `Completed in ${website.elapsed}s` : 'Completed'}
+                      {website.elapsed
+                        ? `Completed in ${website.elapsed}s`
+                        : "Completed"}
                     </p>
                   </div>
                 </div>
 
-                <div className={`rounded-full px-4 py-2 text-sm font-semibold ${website.totalEmails > 0
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-slate-100 text-slate-600'
-                  }`}>
+                <div
+                  className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                    website.totalEmails > 0
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                >
                   {website.totalEmails} Emails
                 </div>
               </div>
@@ -428,7 +614,8 @@ amazon.com`}
               <div className="mt-6">
                 {website.totalEmails === 0 ? (
                   <div className="rounded-xl bg-amber-50 p-4 text-amber-600 border border-amber-100">
-                    <span className="font-medium">ℹ️</span> No emails found for this domain
+                    <span className="font-medium">ℹ️</span> No emails found for
+                    this domain
                   </div>
                 ) : (
                   <div className="space-y-3">
