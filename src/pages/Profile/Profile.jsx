@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { FaUser, FaEnvelope, FaUserTag, FaCalendarAlt, FaEdit, FaSave, FaTimes, FaCamera, FaPhone, FaMapMarker, FaBuilding, FaGlobe } from 'react-icons/fa';
 import { authService } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
-
+import MainLayout from "../../layouts/MainLayout";
+import PageHeader from "../../components/common/PageHeader";
 const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -204,13 +205,12 @@ const Profile = () => {
   }
 
   return (
+    <MainLayout>
+          <PageHeader
+            title="Profile"
+            subtitle="Manage your profile."
+          />
     <div className="max-w-4xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-        <p className="text-gray-600 mt-1">Manage your account settings and preferences</p>
-      </div>
-
       {/* Error and Success Messages */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2">
@@ -502,6 +502,7 @@ const Profile = () => {
         </div>
       </div>
     </div>
+     </MainLayout>
   );
 };
 
